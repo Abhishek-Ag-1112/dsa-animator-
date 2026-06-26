@@ -161,69 +161,82 @@ For example:
 
 Return ONLY the raw JSON output matching the schema. Do not write any think blocks, <think> tags, explanation, reasoning, or markdown code blocks. Start your response with '{' and end with '}'.`;
 
+    const models = [
+      process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+      'groq/compound',
+      'groq/compound-mini'
+    ];
+
     let lastErrorText = '';
     let lastStatus = 500;
     let rawContent = '';
 
-    // Try with and without response_format parameter (llama-3.3-70b-versatile supports JSON mode, but fallback is good)
-    const attempts = [
-      { useJsonFormat: true },
-      { useJsonFormat: false }
-    ];
+    // Loop through candidate models in order of fallback priority
+    for (const model of models) {
+      console.log(`Attempting generation with model: ${model}`);
+      
+      const formatAttempts = [true, false];
+      let modelSucceeded = false;
 
-    for (const attempt of attempts) {
-      try {
-        const bodyPayload: any = {
-          model: GROQ_MODEL,
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            { role: 'user', content: userPrompt }
-          ],
-          temperature: 0.1,
-          max_tokens: 4000,
-        };
+      for (const useJsonFormat of formatAttempts) {
+        try {
+          const bodyPayload: any = {
+            model: model,
+            messages: [
+              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'user', content: userPrompt }
+            ],
+            temperature: 0.1,
+            max_tokens: 4000,
+          };
 
-        if (attempt.useJsonFormat) {
-          bodyPayload.response_format = { type: 'json_object' };
-        }
+          if (useJsonFormat) {
+            bodyPayload.response_format = { type: 'json_object' };
+          }
 
-        const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${GROQ_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(bodyPayload),
-        });
+          const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${GROQ_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(bodyPayload),
+          });
 
-        if (!groqResponse.ok) {
-          lastErrorText = await groqResponse.text();
-          lastStatus = groqResponse.status;
-          console.warn(`Groq attempt (useJsonFormat=${attempt.useJsonFormat}) failed with status ${lastStatus}: ${lastErrorText}`);
-          continue; // Try the next attempt
-        }
+          if (!groqResponse.ok) {
+            lastErrorText = await groqResponse.text();
+            lastStatus = groqResponse.status;
+            console.warn(`Groq attempt (model=${model}, json=${useJsonFormat}) failed with status ${lastStatus}: ${lastErrorText}`);
+            continue; 
+          }
 
-        const data = await groqResponse.json();
-        const content = data.choices?.[0]?.message?.content;
+          const data = await groqResponse.json();
+          const content = data.choices?.[0]?.message?.content;
 
-        if (content) {
-          rawContent = content;
-          break; // Successfully got response
-        } else {
-          lastErrorText = 'Empty choices in response';
+          if (content) {
+            rawContent = content;
+            modelSucceeded = true;
+            break; 
+          } else {
+            lastErrorText = 'Empty choices in response';
+            lastStatus = 500;
+          }
+        } catch (err: any) {
+          lastErrorText = err.message || String(err);
           lastStatus = 500;
+          console.warn(`Error connecting to Groq (model=${model}, json=${useJsonFormat}):`, err);
         }
-      } catch (err: any) {
-        lastErrorText = err.message || String(err);
-        lastStatus = 500;
-        console.warn(`Error connecting to Groq (useJsonFormat=${attempt.useJsonFormat}):`, err);
+      }
+
+      if (modelSucceeded) {
+        break; 
       }
     }
 
     if (!rawContent) {
       return NextResponse.json({
         success: false,
-        error: 'Groq API failed or is over capacity',
+        error: 'All candidate Groq models failed or are over capacity',
         details: lastErrorText,
       }, { status: lastStatus });
     }
