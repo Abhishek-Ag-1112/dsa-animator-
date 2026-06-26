@@ -59,6 +59,7 @@ interface HistoryItem {
   inputType: VisualizerType;
   inputValue: string;
   timestamp: number;
+  animationData?: AnimationData | null;
 }
 
 export default function MainPage() {
@@ -255,6 +256,7 @@ export default function MainPage() {
           inputType: data.inputType || 'sorting',
           inputValue: data.inputValue || '',
           timestamp: data.timestamp || Date.now(),
+          animationData: data.animationData || null
         });
       });
 
@@ -274,6 +276,7 @@ export default function MainPage() {
                   inputType: item.inputType,
                   inputValue: item.inputValue,
                   timestamp: item.timestamp,
+                  animationData: item.animationData || null
                 });
               });
               await batch.commit();
@@ -392,7 +395,7 @@ export default function MainPage() {
 
         // Add to history if Panel A
         if (!isPanelB) {
-          saveToHistory(sanitized.algorithm || 'Custom Algorithm', code, type, valStr);
+          saveToHistory(sanitized.algorithm || 'Custom Algorithm', code, type, valStr, sanitized);
         }
       } else {
         setError({
@@ -411,13 +414,14 @@ export default function MainPage() {
   };
 
   // --- Save to History (Firestore or Local) ---
-  const saveToHistory = async (name: string, code: string, type: VisualizerType, val: string) => {
+  const saveToHistory = async (name: string, code: string, type: VisualizerType, val: string, animData?: AnimationData | null) => {
     const newItem = {
       name,
       code,
       inputType: type,
       inputValue: val,
       timestamp: Date.now(),
+      animationData: animData || null
     };
 
     if (user) {
@@ -448,13 +452,36 @@ export default function MainPage() {
   };
 
   // --- Reload History Item ---
-  const loadHistoryItem = (item: HistoryItem) => {
-    setCodeA(item.code);
-    setInputTypeA(item.inputType);
-    setInputValue(item.inputValue);
-    setIsAnimatingA(false);
-    setAnimationDataA(null);
-    setErrorA(null);
+  const loadHistoryItem = (item: HistoryItem, target: 'A' | 'B' = 'A') => {
+    if (target === 'A') {
+      setCodeA(item.code);
+      setInputTypeA(item.inputType);
+      setInputValue(item.inputValue);
+      setErrorA(null);
+      
+      if (item.animationData) {
+        setAnimationDataA(item.animationData);
+        setIsAnimatingA(true);
+        setCurrentStep(0);
+      } else {
+        setAnimationDataA(null);
+        setIsAnimatingA(false);
+      }
+    } else {
+      setCodeB(item.code);
+      setInputTypeB(item.inputType);
+      setInputValue(item.inputValue);
+      setErrorB(null);
+      
+      if (item.animationData) {
+        setAnimationDataB(item.animationData);
+        setIsAnimatingB(true);
+        setCurrentStep(0);
+      } else {
+        setAnimationDataB(null);
+        setIsAnimatingB(false);
+      }
+    }
     setShowHistory(false);
   };
 
@@ -757,22 +784,46 @@ export default function MainPage() {
               history.map((item) => (
                 <div
                   key={item.id}
-                  onClick={() => loadHistoryItem(item)}
-                  className="p-3 rounded border border-border hover:border-accent bg-background/50 cursor-pointer transition-all flex flex-col gap-1 font-mono text-xs group"
+                  onClick={!comparisonMode ? () => loadHistoryItem(item, 'A') : undefined}
+                  className={`p-3 rounded border border-border bg-background/50 transition-all flex flex-col gap-2 font-mono text-xs ${
+                    !comparisonMode ? 'hover:border-accent cursor-pointer group' : ''
+                  }`}
                 >
                   <div className="flex justify-between items-center">
-                    <span className="font-bold text-text-primary group-hover:text-accent transition-colors">
+                    <span className={`font-bold text-text-primary transition-colors ${!comparisonMode ? 'group-hover:text-accent' : ''}`}>
                       {item.name}
                     </span>
-                    <span className="text-[9px] bg-surface px-1.5 py-0.5 rounded border border-border text-text-secondary">
+                    <span className="text-[9px] bg-surface px-1.5 py-0.5 rounded border border-border text-text-secondary uppercase">
                       {item.inputType}
                     </span>
                   </div>
                   <div className="text-[10px] text-text-secondary line-clamp-1 italic">
                     Input: {item.inputValue}
                   </div>
-                  <div className="text-[9px] text-text-secondary mt-1.5 text-right">
-                    {new Date(item.timestamp).toLocaleTimeString()}
+                  <div className="flex items-center justify-between mt-1 pt-1.5 border-t border-border/30">
+                    <span className="text-[9px] text-text-secondary">
+                      {new Date(item.timestamp).toLocaleTimeString()}
+                    </span>
+                    {comparisonMode ? (
+                      <div className="flex gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => loadHistoryItem(item, 'A')}
+                          className="px-2 py-0.5 rounded bg-accent/10 hover:bg-accent/20 border border-accent/20 text-accent font-bold text-[9px] transition-colors focus:outline-none"
+                        >
+                          Load to A
+                        </button>
+                        <button
+                          onClick={() => loadHistoryItem(item, 'B')}
+                          className="px-2 py-0.5 rounded bg-[#ff79c6]/10 hover:bg-[#ff79c6]/20 border border-[#ff79c6]/20 text-[#ff79c6] font-bold text-[9px] transition-colors focus:outline-none"
+                        >
+                          Load to B
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-[9px] text-accent font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                        Click to Load &rarr;
+                      </span>
+                    )}
                   </div>
                 </div>
               ))
