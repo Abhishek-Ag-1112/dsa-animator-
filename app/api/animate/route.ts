@@ -53,7 +53,7 @@ Note:
 - Include ONLY the fields that correspond to the matching visualizer type in each step (e.g. for "sorting" type, include "array", "comparing", "swapped", "sorted". For "linkedlist" type, include "nodes", "highlighted", "head").
 - Linked List nodes must contain: "val", "next" (next node's id or null), "id" (unique string ID).
 - Tree nodes must contain: "val", "left" (left node's id or null), "right" (right node's id or null), "id" (unique string ID).
-- Generate max 20 steps to avoid output truncation. codeLine must accurately track execution. pseudoLine must track the matching pseudocode line. Make sure the animation corresponds to the custom input provided.`;
+- CRITICAL: Keep animations concise and limit output to a maximum of 15-20 steps to avoid output truncation. Group sequential operations (like multi-line swaps or temporary assignments) into a single step rather than mapping each individual assignment line to its own separate step. For instance, show the entire swap operation in a single step with `swapped: true` instead of rendering 3 separate steps for storing, shifting, and restoring variables. If the algorithm naturally takes more than 20 steps, omit middle redundant iterations to keep the JSON output complete and valid.`;
 
 /**
  * Strips comments (both single-line and multi-line) and trailing commas
