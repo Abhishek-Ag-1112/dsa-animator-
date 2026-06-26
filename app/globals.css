@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0f0f13;
+  --surface: #18181f;
+  --border: #2e2e3d;
+  --accent: #7c6cf8;
+  --accent-hover: #6355d8;
+  --accent-muted: #1e1a3d;
+  --text-primary: #e2e0f0;
+  --text-secondary: #8b89a8;
+  --line-hl: #261f4a;
+}
+
+.theme-default-dark {
+  --background: #0f0f13;
+  --surface: #18181f;
+  --border: #2e2e3d;
+  --accent: #7c6cf8;
+  --accent-hover: #6355d8;
+  --accent-muted: #1e1a3d;
+  --text-primary: #e2e0f0;
+  --text-secondary: #8b89a8;
+  --line-hl: #261f4a;
+}
+
+.theme-github-dark {
+  --background: #0d1117;
+  --surface: #161b22;
+  --border: #30363d;
+  --accent: #58a6ff;
+  --accent-hover: #1f6feb;
+  --accent-muted: rgba(88, 166, 255, 0.15);
+  --text-primary: #c9d1d9;
+  --text-secondary: #8b949e;
+  --line-hl: rgba(88, 166, 255, 0.1);
+}
+
+.theme-dracula {
+  --background: #1e1f29;
+  --surface: #282a36;
+  --border: #44475a;
+  --accent: #bd93f9;
+  --accent-hover: #ff79c6;
+  --accent-muted: #2d1e4e;
+  --text-primary: #f8f8f2;
+  --text-secondary: #6272a4;
+  --line-hl: #3d2e60;
+}
+
+.theme-monokai {
+  --background: #272822;
+  --surface: #1e1f1c;
+  --border: #3e3d32;
+  --accent: #a6e22e;
+  --accent-hover: #f92672;
+  --accent-muted: rgba(166, 226, 46, 0.15);
+  --text-primary: #f8f8f2;
+  --text-secondary: #a5a59e;
+  --line-hl: rgba(166, 226, 46, 0.1);
+}
+
+.theme-light {
+  --background: #f5f5f7;
+  --surface: #ffffff;
+  --border: #e0e0e8;
+  --accent: #5b4cf5;
+  --accent-hover: #4c3ce3;
+  --accent-muted: #ede9fe;
+  --text-primary: #1a1a2e;
+  --text-secondary: #6b6b8a;
+  --line-hl: #ede9fe;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* Keyframes for flash variable tracker */
+@keyframes flash-highlight {
+  0% {
+    background-color: var(--accent-muted);
+    box-shadow: 0 0 10px var(--accent);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: none;
+  }
+}
+
+.flash-change {
+  animation: flash-highlight 0.5s ease-out;
+}
+
+/* Custom grid dots for empty state or editor background if needed */
+.grid-bg {
+  background-size: 24px 24px;
+  background-image: 
+    linear-gradient(to right, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+}
