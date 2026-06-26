@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { 
   signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword 
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -29,11 +31,28 @@ interface LandingPageProps {
 
 export default function LandingPage({ onAuthSuccess }: LandingPageProps) {
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
-  const [email, setEmail] = useState('abhishek040478@gmail.com'); // Prefilled as requested
+  const [email, setEmail] = useState(''); // Empty for production ready input
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      onAuthSuccess(userCredential.user);
+    } catch (err: any) {
+      console.error(err);
+      if (err.code !== 'auth/popup-closed-by-user') {
+        setError(`Google Sign In failed (${err.code || 'Error'}): ${err.message || 'Please try again.'}`);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,7 +133,6 @@ export default function LandingPage({ onAuthSuccess }: LandingPageProps) {
           </span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-xs text-gray-400 hidden sm:inline-block">Logged in as: abhishek040478@gmail.com</span>
           <a 
             href="#auth-card" 
             className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition text-sm font-semibold"
@@ -245,7 +263,7 @@ export default function LandingPage({ onAuthSuccess }: LandingPageProps) {
                   {activeTab === 'login' && (
                     <button 
                       type="button" 
-                      onClick={() => alert("Please register a new user or login with details provided.")} 
+                      onClick={() => alert("Password reset is not configured. Please create a new account or use Google Sign-In.")} 
                       className="text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold"
                     >
                       Forgot?
@@ -290,12 +308,28 @@ export default function LandingPage({ onAuthSuccess }: LandingPageProps) {
               </button>
             </form>
 
-            {/* Quick Demo Credentials Help */}
-            <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.04] text-[11px] text-gray-400 text-left relative z-10 flex flex-col gap-1">
-              <span className="font-bold text-gray-300">Quick Start Hint:</span>
-              <span>1. Enter a password (e.g. <code className="text-pink-300 bg-white/[0.04] px-1 py-0.5 rounded">123456</code>) and click <strong className="text-indigo-300">Create Account</strong> to register your test account.</span>
-              <span>2. If it is already registered, click <strong className="text-indigo-300">Sign In</strong> with your password instead.</span>
+            {/* Separator */}
+            <div className="relative flex py-1 items-center z-10">
+              <div className="flex-grow border-t border-white/[0.08]"></div>
+              <span className="flex-shrink mx-4 text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Or continue with</span>
+              <div className="flex-grow border-t border-white/[0.08]"></div>
             </div>
+
+            {/* Google Sign In Button */}
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="w-full py-2.5 px-4 rounded-lg bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 text-white font-semibold text-sm shadow-md transition flex items-center justify-center gap-2 select-none relative z-10 animate-fade-in"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.85z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.85c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
+              <span>Google</span>
+            </button>
 
           </div>
         </div>
@@ -304,7 +338,7 @@ export default function LandingPage({ onAuthSuccess }: LandingPageProps) {
 
       {/* Footer */}
       <footer className="relative max-w-7xl mx-auto px-6 py-6 border-t border-white/[0.03] w-full text-center text-xs text-gray-500 z-10">
-        <p>© 2026 AlgoVis AI. Built with premium design standards. Active account configuration: abhishek040478@gmail.com.</p>
+        <p>© 2026 AlgoVis AI. Built with premium design standards.</p>
       </footer>
 
     </div>
