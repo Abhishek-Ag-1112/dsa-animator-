@@ -163,8 +163,10 @@ Return ONLY the raw JSON output matching the schema. Do not write any think bloc
 
     const models = [
       process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
-      'groq/compound',
-      'groq/compound-mini'
+      'meta-llama/llama-4-scout-17b-16e-instruct',
+      'llama-3.1-8b-instant',
+      'openai/gpt-oss-120b',
+      'openai/gpt-oss-20b'
     ];
 
     let lastErrorText = '';
